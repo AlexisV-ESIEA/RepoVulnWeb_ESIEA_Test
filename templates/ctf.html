@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Commandprompt</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; }
+    input[type="text"] { width: 60%; padding: 6px; }
+    button { padding: 6px 10px; margin-left: 8px; }
+    pre { background:#f4f4f4; padding:12px; border-radius:6px; }
+    .error { color: #d00; }
+    .info { color: #444; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>commandpromptsecret</h1>
+  <p class="info">Commandes autorisées : <code>ls</code> | <code>cat &lt;filename&gt;</code> | <code>ping &lt;ipv4&gt;</code></p>
+
+  <form method="post" action="/ctf">
+    <label for="cmd">Commande :</label><br/>
+    <input id="cmd" name="cmd" placeholder="ls" autocomplete="off" />
+    <button type="submit">Exécuter</button>
+  </form>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+
+  <h3>Résultat :</h3>
+  <pre>{{ result }}</pre>
+
+  <p class="info">Répertoire CTF : <code>{{ ctf_dir }}</code></p>
+  <p><a href="/">Retour</a></p>
+</body>
+</html>
