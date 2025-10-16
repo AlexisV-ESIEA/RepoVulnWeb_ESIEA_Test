@@ -8,6 +8,7 @@ c.executemany("INSERT INTO users (name, comment) VALUES (?, ?)", [
     ("alice", "hello"),
     ("bob", "I like cats"),
     ("admin", "superuser"),
+    ("flag", "MauvaisSQL")
 ])
 conn.commit()
 conn.close()
