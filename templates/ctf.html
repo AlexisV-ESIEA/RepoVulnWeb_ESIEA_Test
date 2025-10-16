@@ -14,11 +14,11 @@
 </head>
 <body>
   <h1>commandpromptsecret</h1>
-  <p class="info">Commandes autorisées : <code>ls</code> | <code>cat &lt;filename&gt;</code> | <code>ping &lt;ipv4&gt;</code></p>
+  <p class="info">Comment utiliser ? <code>ping &lt;ipv4&gt;</code></p>
 
   <form method="post" action="/ctf">
     <label for="cmd">Commande :</label><br/>
-    <input id="cmd" name="cmd" placeholder="ls" autocomplete="off" />
+    <input id="cmd" name="cmd" placeholder="ping IP" autocomplete="off" />
     <button type="submit">Exécuter</button>
   </form>
 
@@ -29,7 +29,6 @@
   <h3>Résultat :</h3>
   <pre>{{ result }}</pre>
 
-  <p class="info">Répertoire CTF : <code>{{ ctf_dir }}</code></p>
   <p><a href="/">Retour</a></p>
 </body>
 </html>
