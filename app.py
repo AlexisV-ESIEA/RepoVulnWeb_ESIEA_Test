@@ -9,25 +9,25 @@ import platform
 
 app = Flask(__name__)
 
-# Folders
+# dossiers
 UPLOAD_FOLDER = "uploads"
 CTF_FOLDER = os.path.join(UPLOAD_FOLDER, "ctf_files")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CTF_FOLDER, exist_ok=True)
 
-# Database helper
+# base de donnée sqlit3
 def get_db():
     conn = sqlite3.connect("app.db")
     conn.row_factory = sqlite3.Row
     return conn
 
-# Home
+# /
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-# Search (intentionally left vulnerable as TP exercise)
+# /search
 @app.route("/search", methods=["POST"])
 def search():
     q = request.form.get("q", "")
@@ -37,7 +37,7 @@ def search():
     rows = cur.fetchall()
     return render_template("index.html", results=rows, query=q)
 
-# Safe upload: secure_filename + uuid prefix to avoid collisions and path traversal
+# /upload
 @app.route("/upload", methods=["POST"])
 def upload():
     f = request.files.get("file")
@@ -51,7 +51,7 @@ def upload():
     f.save(path)
     return f"Uploaded: {safe_name}"
 
-# List uploads (simple HTML list with download links)
+# Liste des uploads
 @app.route("/uploads_list", methods=["GET"])
 def uploads_list():
     try:
@@ -65,7 +65,7 @@ def uploads_list():
     html += "</ul>"
     return html
 
-# Download uploaded file (prevents path traversal)
+# DL file
 @app.route("/download/<path:filename>", methods=["GET"])
 def download_file(filename):
     safe_filename = werkzeug.utils.secure_filename(filename)
@@ -74,26 +74,62 @@ def download_file(filename):
         abort(404)
     return send_from_directory(UPLOAD_FOLDER, safe_filename, as_attachment=True)
 
-# Helper: secure join and check to prevent path traversal for ctf_files
+# naviguer dans /uploads
+@app.route("/files", methods=["GET"])
+def list_files():
+    
+    base_dir = os.path.abspath(UPLOAD_FOLDER)
+    subpath = request.args.get("path", "").strip()
+    requested = os.path.normpath(os.path.join(base_dir, subpath))
+
+    # bloquer a /upload
+    if not (requested == base_dir or requested.startswith(base_dir + os.sep)):
+        return "<h3>Accès refusé</h3>", 403
+
+    if not os.path.exists(requested):
+        return "<h3>Ce fichier ou dossier n'existe pas.</h3>", 404
+
+    # si fichier = telecharge
+    if os.path.isfile(requested):
+        directory = os.path.dirname(requested)
+        filename = os.path.basename(requested)
+        return send_from_directory(directory, filename, as_attachment=True)
+
+    # sinon affiche contenu 
+    entries = sorted(os.listdir(requested), key=lambda s: s.lower())
+    relpath = os.path.relpath(requested, base_dir)
+    display_rel = "" if relpath == "." else relpath
+    html = f"<h2>Contenu de /{display_rel}</h2><ul>"
+
+    for e in entries:
+        full_rel = os.path.join(display_rel, e) if display_rel else e
+        full_abs = os.path.join(requested, e)
+        if os.path.isdir(full_abs):
+            html += f'<li>📁 <a href="/files?path={full_rel}">{e}/</a></li>'
+        else:
+            html += f'<li>📄 <a href="/files?path={full_rel}">{e}</a> - <small>{os.path.getsize(full_abs)} bytes</small></li>'
+    html += "</ul>"
+
+    # /
+    if relpath != ".":
+        parent = os.path.dirname(relpath)
+        html += f'<p><a href="/files?path={parent}">⬅️ Retour</a></p>'
+    html += '<p><a href="/">🏠 Accueil</a></p>'
+    return html
+
+
 def safe_join_and_check(base_dir, filename):
     safe_name = werkzeug.utils.secure_filename(filename)
     target = os.path.normpath(os.path.join(base_dir, safe_name))
     base_real = os.path.realpath(base_dir)
     target_real = os.path.realpath(target)
-    # allow the base dir itself or subpaths strictly inside base_dir
     if not (target_real == base_real or target_real.startswith(base_real + os.sep)):
         return None
     return target_real
 
-# CTF interface (renders template ctf.html)
+# interface du /ctf
 @app.route("/ctf", methods=["GET", "POST"])
 def ctf():
-    """
-    Safe CTF helper:
-    - ls : list files in uploads/ctf_files
-    - cat <filename> : show file content (max 4 KiB)
-    - ping <ipv4> : perform a ping (validated IPv4, subprocess without shell)
-    """
     result = ""
     error = ""
     if request.method == "POST":
@@ -161,6 +197,6 @@ def ctf():
 
     return render_template("ctf.html", result=result, error=error, ctf_dir=CTF_FOLDER)
 
-# Run the app
+#Lancement appli
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000, debug=True)
