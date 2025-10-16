@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Vuln Web TP</title></head>
+  <body>
+    <h1>Mini app vuln (Flask)</h1>
+
+    <h2>Search (SQLi)</h2>
+    <form action="/search" method="post">
+      <input name="q" placeholder="search name">
+      <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+      <p>Results for "{{ query }}":</p>
+      <ul>
+      {% for r in results %}
+        <li>{{ r['id'] }} - {{ r['name'] }} : {{ r['comment'] }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+
+    <h2>Upload (no validation)</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file">
+      <button type="submit">Upload</button>
+    </form>
+  </body>
+</html>
